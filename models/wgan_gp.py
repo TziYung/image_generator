@@ -120,4 +120,3 @@ class WGAN_GP(tf.keras.Model):
         gradient = tf.sqrt(gradient + 1e-12)
         
         return tf.square(gradient - 1.0))
-    #TODO critic variable naming
