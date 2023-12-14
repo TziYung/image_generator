@@ -1,28 +1,28 @@
 import tensorflow as tf
 from matplotlib import pyplot as plt
 import numpy as np
+import math
 
 class WGAN_GP(tf.keras.Model):
-    def __init__(self, generator, discriminator, gp_weight = 10.0, latent_size = 10, noise_ratio):
-    
-    super().__init__()
-    self.generator = generator
-    self.discriminator = discriminator
-    self.gp_weight = gp_weight
-    self.latent_size = latent_size
-    self.noise_ratio = noise_ratio
-    
-    # Generator loss tracker
-    self.g_loss_tracker = tf.keras.metrics.Maen(name = "Generator Loss")
+    def __init__(self, generator, discriminator, gp_weight = 10.0, latent_size = 10, noise_ratio = 0.1):
+        super().__init__()
+        self.generator = generator
+        self.discriminator = discriminator
+        self.gp_weight = gp_weight
+        self.latent_size = latent_size
+        self.noise_ratio = noise_ratio
+        
+        # Generator loss tracker
+        self.g_loss_tracker = tf.keras.metrics.Mean(name = "Generator Loss")
 
-    # Discriminator loss tracker
-    self.d_loss_tracker = tf.keras.metrics.Maen(name = "Discriminator Loss")
+        # Discriminator loss tracker
+        self.d_loss_tracker = tf.keras.metrics.Mean(name = "Discriminator Loss")
 
-    # Gradient Penalty tracker
-    self.gp_tracker = tf.keras.metrics.Maen(name = "Gradient Penalty")
+        # Gradient Penalty tracker
+        self.gp_tracker = tf.keras.metrics.Mean(name = "Gradient Penalty")
 
-    # Total Discriminator Loss = Sum of gp and discriminator loss
-    self.total_d_loss_tracker = tf.metrics.Mean(name = "Total Discriminator loss")
+        # Total Discriminator Loss = Sum of gp and discriminator loss
+        self.total_d_loss_tracker = tf.metrics.Mean(name = "Total Discriminator loss")
 
     @property
     def metrics(self):
@@ -46,21 +46,23 @@ class WGAN_GP(tf.keras.Model):
         with tf.GradientTape() as tape:
             loss =self.get_generator_loss(tf.shape(r_image)[0])
         trainable_vars = self.generator.trainable_variables
-        gradient = tape.grdient(loss, trainable_vars)
-        self.g_opt.apply_grdients(zip(gradient, trainable_vars))
+        gradient = tape.gradient(loss, trainable_vars)
+        self.g_opt.apply_gradients(zip(gradient, trainable_vars))
 
     def update_discriminator(self, r_image):
-        latent = tf.random.normal(shape = (tf.shape(r_iage)[0], self.latent_size))
+        latent = tf.random.normal(shape = (tf.shape(r_image)[0], self.latent_size))
         g_image = self.generator(latent)
         with tf.GradientTape() as tape:
             loss = self.get_discriminator_loss(r_image, g_image)
         trainable_vars = self.discriminator.trainable_variables
-        gradient = tape.gradient(zip(gradient, trainable_vars))
+        gradient = tape.gradient(loss, trainable_vars)
+        self.d_opt.apply_gradients(zip(gradient, trainable_vars))
     
 
     def get_discriminator_loss(self, r_image, g_image):
         # Adding noise to r_image
-        r_image = r_image * (1 - self.noise_ratio) + tf.random.uniform(tf.shape(r_image), -1, 1) * self.noise_ratio
+        r_image = r_image * (1.0 - self.noise_ratio) 
+        r_image = r_image + tf.random.uniform(tf.shape(r_image), -1.0, 1.0) * self.noise_ratio
         
         r_score = self.discriminator(r_image)
         g_score = self.discriminator(g_image)
@@ -89,11 +91,11 @@ class WGAN_GP(tf.keras.Model):
         # To transfer it to gradient descent applicable function, it is multiplied -1:
         # - g_score
         # And we would try to minize -g_score 
-        critic = -tf.reuce_mean(g_score)
+        critic = -tf.reduce_mean(g_score)
         self.g_loss_tracker.update_state(critic)
         return critic
     
-    def get_gp(r_image, g_image):
+    def get_gp(self, r_image, g_image):
         """
         WGAN use wasserstein distance to measure the distance between real and generated image.
         Besides the loss calculated, it also needed the discriminator to be 1-lipschitz function.
@@ -119,4 +121,52 @@ class WGAN_GP(tf.keras.Model):
         gradient = tf.reduce_sum(tf.square(gradient), axis = (1, 2, 3))
         gradient = tf.sqrt(gradient + 1e-12)
         
-        return tf.square(gradient - 1.0))
+        return tf.square(gradient - 1.0)
+def define_generator(latent_size, img_size):
+    input_ = tf.keras.Input((latent_size))
+    layer = tf.keras.layers.Dense(256)(input_)
+    layer = tf.keras.layers.BatchNormalization()(layer)
+    layer = tf.keras.layers.LeakyReLU()(layer)
+    
+    layer = tf.keras.layers.Reshape((4, 4, 16))(layer)
+    layer = tf.keras.layers.Conv2D(64, (3, 3), padding = "same")(layer)
+    layer = tf.keras.layers.BatchNormalization()(layer)
+    layer = tf.keras.layers.LeakyReLU()(layer)
+
+    level = int(math.log(img_size/4) / math.log(2))
+    for _ in range(level):
+        layer = tf.keras.layers.Conv2DTranspose(64, 5, strides = (2, 2), padding = "same")(layer)
+        layer = tf.keras.layers.BatchNormalization()(layer)
+        layer = tf.keras.layers.LeakyReLU()(layer)
+        layer = tf.keras.layers.Conv2D(64, 5, padding = "same")(layer)
+        layer = tf.keras.layers.BatchNormalization()(layer)
+        layer = tf.keras.layers.LeakyReLU()(layer)
+    layer = tf.keras.layers.Conv2D(3, (7, 7), padding = "same")(layer)
+    layer = tf.keras.layers.Activation("tanh")(layer)
+
+    generator = tf.keras.Model(input_, layer, name = "generator")
+    return generator
+
+def define_discriminator(img_size):
+    img = tf.keras.layers.Input((img_size, img_size, 3))
+    layer = tf.keras.layers.Conv2D(64, (5, 5), strides = (2,2), padding = "same")(img)
+    layer = tf.keras.layers.BatchNormalization()(layer)
+    layer = tf.keras.layers.LeakyReLU()(layer)
+    
+    level = int(math.log(img_size/2 / 4) / math.log(2))
+
+    for _ in range(level): 
+        layer = tf.keras.layers.Conv2D(64, (5, 5), strides = (2,2), padding = "same")(layer)
+        layer = tf.keras.layers.BatchNormalization()(layer)
+        out = tf.keras.layers.LeakyReLU()(layer)
+
+        layer = tf.keras.layers.Conv2D(64, (5, 5), padding = "same")(out)
+        layer = tf.keras.layers.BatchNormalization()(layer + out)
+        layer = tf.keras.layers.LeakyReLU()(layer)
+
+    layer = tf.keras.layers.Flatten()(layer)
+    layer = tf.keras.layers.Dense(1)(layer)
+
+    discriminator = tf.keras.Model(img, layer)
+
+    return discriminator
