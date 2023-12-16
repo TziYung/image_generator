@@ -27,6 +27,6 @@ if __name__ == "__main__":
 
     model.compile(tf.keras.optimizers.RMSprop(learning_rate = 1e-4),
                   tf.keras.optimizers.RMSprop(learning_rate = 1e-4))
-    model.fit(data, epochs = 10000, callbacks = [Monitor(10, __file__.replace("main.py", ""))], shuffle = False)
+    model.fit(data, epochs = 10000, batch_size = args.batch_size, callbacks = [Monitor(10, __file__.replace("main.py", ""))], shuffle = False)
 
     
