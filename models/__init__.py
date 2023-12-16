@@ -8,9 +8,9 @@ class Monitor(tf.keras.callbacks.Callback):
         self.image_dir = os.path.join(self.path, "generated_images")
         self.weight_dir = os.path.join(self.path, "model_weighs")
         if os.path.isdir(self.image_dir) == False:
-            os.makedir(self.image_dir)
+            os.mkdir(self.image_dir)
         if os.path.isdir(self.weight_dir) == False:
-            os.makedir(self.weight_dir)
+            os.mkdir(self.weight_dir)
     
     def on_epoch_end(self, epoch, logs = None):
         # To avoid log 0 and make it start with 1
