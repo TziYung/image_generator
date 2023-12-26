@@ -17,44 +17,32 @@ To further explain why Wasserstein distance is better for measuring distance tha
 
 - Wasserstein distance
     
-    $$
-    W(\mathbb{P}\_r, \mathbb{P}\_\theta) = \underset{\gamma \in \prod(\mathbb{P}\_r, \mathbb{P}\_\theta)}{\text{inf}}\mathbb{E}\_{(x,y) \sim \gamma}{||x-y||}
-    $$
+    $$W(\mathbb{P}\_r, \mathbb{P}\_\theta) = \underset{\gamma \in \prod(\mathbb{P}\_r, \mathbb{P}\_\theta)}{\text{inf}}\mathbb{E}\_{(x,y) \sim \gamma}{||x-y||}$$
     
     where $\prod(\mathbb{P}\_r, \mathbb{P}\_\theta)$ is the set of all joint distributions $\gamma(x,y)$ whose marginals are respectively $\mathbb{P}\_r$ and $\mathbb{P}\_\theta$ and infimum(greatest lower bound) is taken over $\gamma(x,y)$. Expected value is calculate by the pairs $(x,y)$ sample from $\gamma$.
     
 - JS divergence
     
-    $$
-    JS(P\_r||P\_\theta) =\frac{1}{2} (KL(\mathbb{P}\_r||\mathbb{P}\_m) + KL(\mathbb{P}\_\theta||\mathbb{P}\_m))
-    $$
+    $$JS(P\_r||P\_\theta) =\frac{1}{2} (KL(\mathbb{P}\_r||\mathbb{P}\_m) + KL(\mathbb{P}\_\theta||\mathbb{P}\_m))$$
     
     Where $\mathbb{P}\_m$ is $(\mathbb{P}\_r + \mathbb{P}\_m)/2$ , this divergence is symmetric and always define because it could be set to $\mu = \mathbb{P}\_m$.
     
 - The Kullback-Leibler(KL) divergence
     
-    $$
-    KL(\mathbb{P}\_r||\mathbb{P}\_\theta) = \int \log(\frac{P\_r(x)}{P\_\theta(x)})P\_r(x)d\mu(x),
-    $$
+    $$KL(\mathbb{P}\_r||\mathbb{P}\_\theta) = \int \log(\frac{P\_r(x)}{P\_\theta(x)})P\_r(x)d\mu(x),$$
     
 - To further explain why Wasserstein distance is better when 2 distributions not overlapped, the example in WGAN[1] is used to explain. Let $Z\sim U[0,1]$ the uniform distribution on the unit interval. Let $\mathbb{P}\_0$ be the distribution of $(0,Z) \in \mathbb{R}^2$(a 0 on the x-axis and the random variable $Z$ on y-axis), uniform on a straight vertical line passing through the origin. Now let $g\_\theta(z) = (\theta, z)$ with $\theta$ a single real parameter. It is easy to see that in this case:
     - KL divergence:
         
-        $$
-        KL(\mathbb{P}\_0|| \mathbb{P}\_\theta) = KL(\mathbb{P}\_\theta|| \mathbb{P}\_0) = \begin{cases} +\infty & \text{if } \theta \neq 0 \\ 0 &\text{if } \theta = 0 \end{cases}
-        $$
+        $$KL(\mathbb{P}\_0|| \mathbb{P}\_\theta) = KL(\mathbb{P}\_\theta|| \mathbb{P}\_0) = \begin{cases} +\infty & \text{if } \theta \neq 0 \\ 0 &\text{if } \theta = 0 \end{cases}$$
         
     - JS divergence:
         
-        $$
-        JS(\mathbb{P}\_0,\mathbb{P}\_\theta) \begin{cases} \log 2 & \text{if }  \theta \neq 0 \\ 0 & \text{if } \theta =0\end{cases}
-        $$
+        $$JS(\mathbb{P}\_0,\mathbb{P}\_\theta) \begin{cases} \log 2 & \text{if }  \theta \neq 0 \\ 0 & \text{if } \theta =0\end{cases}$$
         
     - Wasserstein distance:
         
-        $$
-        W(\mathbb{P}\_0, \mathbb{P}\_\theta) = |\theta|
-        $$
+        $$W(\mathbb{P}\_0, \mathbb{P}\_\theta) = |\theta|$$
         
     
 
