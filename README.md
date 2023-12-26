@@ -6,59 +6,59 @@ This project implements WGAN-GP for image generation. WGANs are known for their 
 
 # WGAN-GP
 
-The WGAN[1] apply wasserstein-1 distance as the loss metric of GAN to create more meaningful output comparing to other methods when measuring the distance between generated image distribution $\mathbb{P}_\theta$  and real image distribution $\mathbb{P}_r$. It could be difficult for JS divergence, which is the original GANs is related to, due to the reason that $\mathbb{P}_\theta$  and $\mathbb{P}_r$ might not have non-negatable intersection.
+The WGAN[1] apply wasserstein-1 distance as the loss metric of GAN to create more meaningful output comparing to other methods when measuring the distance between generated image distribution $\mathbb{P}\_\theta$  and real image distribution $\mathbb{P}\_r$. It could be difficult for JS divergence, which is the original GANs is related to, due to the reason that $\mathbb{P}\_\theta$  and $\mathbb{P}\_r$ might not have non-negatable intersection.
 
-To further explain why $\mathbb{P}_\theta$  and $\mathbb{P}_r$ wouldn’t overlap:
+To further explain why $\mathbb{P}\_\theta$  and $\mathbb{P}\_r$ wouldn’t overlap:
 
-1. Both $\mathbb{P}_r$  and $\mathbb{P}_{\theta}$ are low-dimension manifold in high dimension space, thus the overlap can be ignored.
-2. Even though $\mathbb{P}_r$ and $\mathbb{P}_\theta$ have overlap, due to the reason that most training train in batch data for each step, if the sampling(batch size) is not large enough, it might still not overlap.
+1. Both $\mathbb{P}\_r$  and $\mathbb{P}\_{\theta}$ are low-dimension manifold in high dimension space, thus the overlap can be ignored.
+2. Even though $\mathbb{P}\_r$ and $\mathbb{P}\_\theta$ have overlap, due to the reason that most training train in batch data for each step, if the sampling(batch size) is not large enough, it might still not overlap.
 
-To further explain why Wasserstein distance is better for measuring distance than JS divergence if $\mathbb{P}_\theta$ and $\mathbb{P}_r$ doesn’t overlap:
+To further explain why Wasserstein distance is better for measuring distance than JS divergence if $\mathbb{P}\_\theta$ and $\mathbb{P}\_r$ doesn’t overlap:
 
 - Wasserstein distance
     
-    $
-    W(\mathbb{P}_r, \mathbb{P}_\theta) = \underset{\gamma \in \prod(\mathbb{P}_r, \mathbb{P}_\theta)}{\text{inf}}\mathbb{E}_{(x,y) \sim \gamma}{||x-y||}
-    $
+    $$
+    W(\mathbb{P}\_r, \mathbb{P}\_\theta) = \underset{\gamma \in \prod(\mathbb{P}\_r, \mathbb{P}\_\theta)}{\text{inf}}\mathbb{E}\_{(x,y) \sim \gamma}{||x-y||}
+    $$
     
-    where $\prod(\mathbb{P}_r, \mathbb{P}_\theta)$ is the set of all joint distributions $\gamma(x,y)$ whose marginals are respectively $\mathbb{P}_r$ and $\mathbb{P}_\theta$ and infimum(greatest lower bound) is taken over $\gamma(x,y)$. Expected value is calculate by the pairs $(x,y)$ sample from $\gamma$.
+    where $\prod(\mathbb{P}\_r, \mathbb{P}\_\theta)$ is the set of all joint distributions $\gamma(x,y)$ whose marginals are respectively $\mathbb{P}\_r$ and $\mathbb{P}\_\theta$ and infimum(greatest lower bound) is taken over $\gamma(x,y)$. Expected value is calculate by the pairs $(x,y)$ sample from $\gamma$.
     
 - JS divergence
     
-    $
-    JS(P_r||P_\theta) =\frac{1}{2} (KL(\mathbb{P}_r||\mathbb{P}_m) + KL(\mathbb{P}_\theta||\mathbb{P}_m))
-    $
+    $$
+    JS(P\_r||P\_\theta) =\frac{1}{2} (KL(\mathbb{P}\_r||\mathbb{P}\_m) + KL(\mathbb{P}\_\theta||\mathbb{P}\_m))
+    $$
     
-    Where $\mathbb{P}_m$ is $(\mathbb{P}_r + \mathbb{P}_m)/2$ , this divergence is symmetric and always define because it could be set to $\mu = \mathbb{P}_m$.
+    Where $\mathbb{P}\_m$ is $(\mathbb{P}\_r + \mathbb{P}\_m)/2$ , this divergence is symmetric and always define because it could be set to $\mu = \mathbb{P}\_m$.
     
 - The Kullback-Leibler(KL) divergence
     
-    $
-    KL(\mathbb{P}_r||\mathbb{P}_\theta) = \int \log(\frac{P_r(x)}{P_\theta(x)})P_r(x)d\mu(x),
-    $
+    $$
+    KL(\mathbb{P}\_r||\mathbb{P}\_\theta) = \int \log(\frac{P\_r(x)}{P\_\theta(x)})P\_r(x)d\mu(x),
+    $$
     
-- To further explain why Wasserstein distance is better when 2 distributions not overlapped, the example in WGAN[1] is used to explain. Let $Z\sim U[0,1]$ the uniform distribution on the unit interval. Let $\mathbb{P}_0$ be the distribution of $(0,Z) \in \mathbb{R}^2$(a 0 on the x-axis and the random variable $Z$ on y-axis), uniform on a straight vertical line passing through the origin. Now let $g_\theta(z) = (\theta, z)$ with $\theta$ a single real parameter. It is easy to see that in this case:
+- To further explain why Wasserstein distance is better when 2 distributions not overlapped, the example in WGAN[1] is used to explain. Let $Z\sim U[0,1]$ the uniform distribution on the unit interval. Let $\mathbb{P}\_0$ be the distribution of $(0,Z) \in \mathbb{R}^2$(a 0 on the x-axis and the random variable $Z$ on y-axis), uniform on a straight vertical line passing through the origin. Now let $g\_\theta(z) = (\theta, z)$ with $\theta$ a single real parameter. It is easy to see that in this case:
     - KL divergence:
         
-        $
-        KL(\mathbb{P}_0|| \mathbb{P}_\theta) = KL(\mathbb{P}_\theta|| \mathbb{P}_0) = \begin{cases} +\infty & \text{if } \theta \neq 0 \\ 0 &\text{if } \theta = 0 \end{cases}
-        $
+        $$
+        KL(\mathbb{P}\_0|| \mathbb{P}\_\theta) = KL(\mathbb{P}\_\theta|| \mathbb{P}\_0) = \begin{cases} +\infty & \text{if } \theta \neq 0 \\ 0 &\text{if } \theta = 0 \end{cases}
+        $$
         
     - JS divergence:
         
-        $
-        JS(\mathbb{P}_0,\mathbb{P}_\theta) \begin{cases} \log 2 & \text{if }  \theta \neq 0 \\ 0 & \text{if } \theta =0\end{cases}
-        $
+        $$
+        JS(\mathbb{P}\_0,\mathbb{P}\_\theta) \begin{cases} \log 2 & \text{if }  \theta \neq 0 \\ 0 & \text{if } \theta =0\end{cases}
+        $$
         
     - Wasserstein distance:
         
-        $
-        W(\mathbb{P}_0, \mathbb{P}_\theta) = |\theta|
-        $
+        $$
+        W(\mathbb{P}\_0, \mathbb{P}\_\theta) = |\theta|
+        $$
         
     
 
-It could be observed that as long as $\mathbb{P}_r, \mathbb{P}_\theta$ doesn’t overlap, in JS divergence, the value would always be $\log{2}$, which mean it doesn’t matter how far or how close $\mathbb{P}_\theta$ is to $\mathbb{P}_r$, as long as it doesn’t overlap, the distance would be $\log2$. In the meantime, Wasserstein distance reflect a more meaningful distance when 2 distributions doesn’t overlap.
+It could be observed that as long as $\mathbb{P}\_r, \mathbb{P}\_\theta$ doesn’t overlap, in JS divergence, the value would always be $\log{2}$, which mean it doesn’t matter how far or how close $\mathbb{P}\_\theta$ is to $\mathbb{P}\_r$, as long as it doesn’t overlap, the distance would be $\log2$. In the meantime, Wasserstein distance reflect a more meaningful distance when 2 distributions doesn’t overlap.
 
 To solve the converge problem of WGAN, WGAN-GP[2] proposed applying gradient penalty as a soft constraint to replace the weight clipping technique, which both of them aim to make WGAN-GP 1-Lipschitz function . By calculating the gradient between generated images and real images, it only enforce the space between generated image and real images, which is believe enough and proof help model to converge in the WGAN-GP paper[2]. 
 
