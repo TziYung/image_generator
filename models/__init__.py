@@ -6,7 +6,7 @@ class Monitor(tf.keras.callbacks.Callback):
         self.number = number
         self.path = path
         self.image_dir = os.path.join(self.path, "generated_images")
-        self.weight_dir = os.path.join(self.path, "model_weighs")
+        self.weight_dir = os.path.join(self.path, "model_weights")
         if os.path.isdir(self.image_dir) == False:
             os.mkdir(self.image_dir)
         if os.path.isdir(self.weight_dir) == False:
