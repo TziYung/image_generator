@@ -157,11 +157,11 @@ def define_discriminator(img_size):
 
     for _ in range(level): 
         layer = tf.keras.layers.Conv2D(64, (5, 5), strides = (2,2), padding = "same")(layer)
-        layer = tf.keras.layers.BatchNormalization()(layer)
+        layer = tf.keras.layers.LayerNormalization()(layer)
         out = tf.keras.layers.LeakyReLU()(layer)
 
         layer = tf.keras.layers.Conv2D(64, (5, 5), padding = "same")(out)
-        layer = tf.keras.layers.BatchNormalization()(layer + out)
+        layer = tf.keras.layers.LayerNormalization()(layer + out)
         layer = tf.keras.layers.LeakyReLU()(layer)
 
     layer = tf.keras.layers.Flatten()(layer)
